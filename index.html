@@ -144,6 +144,7 @@
             gap: 15px;
             padding: 20px;
             background: #F5F5F5; /* White background */
+            flex-direction: row-reverse; /* Added for RTL layout */
         }
         
         .letter-selector {
@@ -581,16 +582,19 @@
         </div>
         
         <div class="letter-selectors">
+            <!-- Position 1 (ف) - Rightmost -->
             <div class="letter-selector" data-position="1">
                 <div class="letter-label">ف كلمة</div>
                 <div class="letter-wheel" id="letter1"></div>
             </div>
             
+            <!-- Position 2 (ع) - Middle -->
             <div class="letter-selector" data-position="2">
                 <div class="letter-label">ع كلمة</div>
                 <div class="letter-wheel" id="letter2"></div>
             </div>
             
+            <!-- Position 3 (ل) - Leftmost -->
             <div class="letter-selector" data-position="3">
                 <div class="letter-label">ل كلمة</div>
                 <div class="letter-wheel" id="letter3"></div>
@@ -783,17 +787,17 @@
                                 <td style="padding: 10px; border: 1px solid #ddd;">Active participle meaning “one who hears” or “listener”; also one of the Names of Allah (The All-Hearing).</td>
                             </tr>
                             <tr>
-                                <td class="arabic-text" style="padding: 10px; border: 1px solid #ddd; font-family: 'Droid Arabic Naskh', serif;">فَعَّالٌ</td>
+                                <td style="padding: 10px; border: 1px solid #ddd;">فَعَّالٌ</td>
                                 <td class="arabic-text" style="padding: 10px; border: 1px solid #ddd; font-family: 'Droid Arabic Naskh', serif;">سَمَّاعٌ</td>
                                 <td style="padding: 10px; border: 1px solid #ddd;">Intensive form meaning “one who listens attentively” or “very attentive listener”.</td>
                             </tr>
                             <tr>
-                                <td style="padding: 10px; border: 1px solid #ddd;">مَفْعَلٌ</td>
+                                <td class="arabic-text" style="padding: 10px; border: 1px solid #ddd; font-family: 'Droid Arabic Naskh', serif;">مَفْعَلٌ</td>
                                 <td class="arabic-text" style="padding: 10px; border: 1px solid #ddd; font-family: 'Droid Arabic Naskh', serif;">مَسْمَعٌ</td>
                                 <td style="padding: 10px; border: 1px solid #ddd;">A noun indicating “place of hearing” or “earshot”.</td>
                             </tr>
                             <tr>
-                                <td class="arabic-text" style="padding: 10px; border: 1px solid #ddd; font-family: 'Droid Arabic Naskh', serif;">مَفْعُولٌ</td>
+                                <td class="arabic-text" style="padding: 10px; border: 1px solid #ddd;">مَفْعُولٌ</td>
                                 <td class="arabic-text" style="padding: 10px; border: 1px solid #ddd; font-family: 'Droid Arabic Naskh', serif;">مَسْمُوعٌ</td>
                                 <td style="padding: 10px; border: 1px solid #ddd;">Passive participle meaning “heard” or “audible”.</td>
                             </tr>
@@ -839,213 +843,309 @@
             `
         };
         
-        // Initialize letter selectors
         function initLetterSelectors() {
             for (let i = 1; i <= 3; i++) {
-                updateLetterSelector(i);
+                createLetterWheel(i); // Create the wheel elements first
+            }
+            // Now that elements exist, set their initial blank state and setup interactions
+            for (let i = 1; i <= 3; i++) {
+                updateLetterSelector(i, ''); 
                 setupScrolling(i);
+                setupTyping(i);
+            }
+            updateRootWord(); // Set initial root word display to blank
+            autoScrollToFael(); // Start auto-scroll animation
+        }
+
+        function createLetterWheel(position) {
+            const wheel = document.getElementById(`letter${position}`);
+            const wheelContent = `
+                <div class="letter-option prev" data-position="${position}"></div>
+                <div class="letter-option selected" data-position="${position}"></div>
+                <div class="letter-option next" data-position="${position}"></div>
+            `;
+            wheel.innerHTML = wheelContent;
+        }
+
+        function updateLetterSelector(position, selectedChar) {
+            const container = document.getElementById(`letter${position}`);
+            const wheelDivs = container.querySelectorAll('.letter-option');
+
+            let currentIndex = arabicLetters.indexOf(selectedChar);
+            
+            if (selectedChar === '') {
+                currentIndex = -1;
+            }
+
+            if (currentIndex === -1) {
+                wheelDivs[1].textContent = '---'; // Display placeholder for blank
+                wheelDivs[0].textContent = ''; // Previous option is blank
+                wheelDivs[2].textContent = ''; // Next option is blank
+                selectedLetters[position - 1] = -1; // Store -1 for blank
+            } else {
+                const prevIndex = (currentIndex - 1 + arabicLetters.length) % arabicLetters.length;
+                const nextIndex = (currentIndex + 1) % arabicLetters.length;
+                
+                wheelDivs[1].textContent = arabicLetters[currentIndex];
+                wheelDivs[0].textContent = arabicLetters[prevIndex];
+                wheelDivs[2].textContent = arabicLetters[nextIndex];
+                selectedLetters[position - 1] = currentIndex;
             }
             updateRootWord();
         }
-        
-        // Update letter selector display
-        function updateLetterSelector(position) {
-            const container = document.getElementById(`letter${position}`);
-            container.innerHTML = '';
-        
-            const currentIndex = selectedLetters[position - 1];
-        
-            // Previous letter
-            const prevIndex = (currentIndex - 1 + arabicLetters.length) % arabicLetters.length;
-            const prevLetter = document.createElement('div');
-            prevLetter.className = 'letter-option prev';
-            prevLetter.textContent = arabicLetters[prevIndex];
-            container.appendChild(prevLetter);
-        
-            // Selected letter
-            const selectedLetter = document.createElement('div');
-            selectedLetter.className = 'letter-option selected';
-            selectedLetter.textContent = arabicLetters[currentIndex];
-            container.appendChild(selectedLetter);
-        
-            // Next letter
-            const nextIndex = (currentIndex + 1) % arabicLetters.length;
-            const nextLetter = document.createElement('div');
-            nextLetter.className = 'letter-option next';
-            nextLetter.textContent = arabicLetters[nextIndex];
-            container.appendChild(nextLetter);
-        }
-        
-        // Setup scrolling for letter wheels
+
         function setupScrolling(position) {
             const wheel = document.getElementById(`letter${position}`);
-        
             wheel.addEventListener('wheel', (e) => {
-                e.preventDefault(); // Prevent page scroll
-                const direction = e.deltaY > 0 ? 1 : -1; // Determine scroll direction
-                changeLetter(position, direction); // Change one letter at a time
+                e.preventDefault();
+                if (isAnimating) return; // Prevent scrolling during animation
+                const direction = e.deltaY > 0 ? 1 : -1;
+                changeLetter(position, direction);
             });
             
-            // Touch support for mobile
             let touchStartY = 0;
-            let isSwiping = false; // Flag to track if a swipe is in progress
-        
+            let isSwiping = false;
+            
             wheel.addEventListener('touchstart', (e) => {
                 touchStartY = e.touches[0].clientY;
-                isSwiping = true; // Set flag when touch starts
+                isSwiping = true;
             });
-        
+            
             wheel.addEventListener('touchmove', (e) => {
-                e.preventDefault(); // Prevent page scroll during touchmove
-                if (!isSwiping) return; // Only process if a swipe might be happening
+                e.preventDefault();
+                if (isAnimating || !isSwiping) return; // Prevent swiping during animation
                 const touchY = e.touches[0].clientY;
                 const swipeDistance = touchY - touchStartY;
-                
-                // Trigger change if swipe distance is significant enough for one letter
-                if (Math.abs(swipeDistance) > 30) { // Threshold for a significant swipe (adjust as needed)
-                    const direction = swipeDistance > 0 ? -1 : 1; // Invert direction for intuitive swipe (swipe down = next letter)
+                if (Math.abs(swipeDistance) > 30) {
+                    const direction = swipeDistance > 0 ? -1 : 1;
                     changeLetter(position, direction);
-                    touchStartY = touchY; // Reset start for continuous swipe
+                    touchStartY = touchY;
                 }
             });
-        
             wheel.addEventListener('touchend', () => {
-                isSwiping = false; // Reset flag when touch ends
+                isSwiping = false;
             });
         }
         
-        // Change letter in selector
-        function changeLetter(position, amount) {
-            let newIndex = selectedLetters[position - 1] + amount;
-        
-            // Correctly wrap around the array, including the placeholder
-            if (newIndex < 0) {
-                newIndex = arabicLetters.length - 1;
-            } else if (newIndex >= arabicLetters.length) {
-                newIndex = 0;
-            }
-            
-            selectedLetters[position - 1] = newIndex;
-        
-            updateLetterSelector(position);
-            updateRootWord();
-            playClickSound(); // Play sound on letter change
+        function setupTyping(position) {
+            const selectedDiv = document.getElementById(`letter${position}`).querySelector('.selected');
+            const wheel = document.getElementById(`letter${position}`);
+
+            selectedDiv.addEventListener('click', () => {
+                if (isAnimating) return; // Prevent typing during animation
+                const currentText = selectedDiv.textContent.trim();
+                const tempInput = document.createElement('input');
+                tempInput.type = 'text';
+                tempInput.className = 'letter-input';
+                tempInput.style.display = 'block';
+                tempInput.value = currentText === '---' ? '' : currentText; // Clear placeholder for typing
+                
+                // Hide wheel options and show input
+                wheel.querySelectorAll('.letter-option').forEach(el => el.style.display = 'none');
+                wheel.appendChild(tempInput);
+                tempInput.focus();
+
+                tempInput.addEventListener('input', () => {
+                    const char = tempInput.value.trim().slice(-1);
+                    const validChar = arabicLetters.find(letter => letter === char);
+                    if (validChar) {
+                        selectedLetters[position - 1] = arabicLetters.indexOf(validChar);
+                        updateLetterSelector(position, validChar);
+                        tempInput.value = validChar; // Keep only the valid Arabic character
+                    } else {
+                        selectedLetters[position - 1] = -1;
+                        updateLetterSelector(position, ''); // Set to blank if invalid
+                        tempInput.value = ''; // Clear invalid input
+                    }
+                });
+
+                const cleanupAndReplace = () => {
+                    tempInput.remove();
+                    wheel.querySelectorAll('.letter-option').forEach(el => el.style.display = 'flex');
+                    // Ensure the correct letter or placeholder is displayed after editing
+                    updateLetterSelector(position, arabicLetters[selectedLetters[position - 1]] || '');
+                };
+
+                tempInput.addEventListener('blur', cleanupAndReplace);
+                tempInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        cleanupAndReplace();
+                    }
+                });
+            });
         }
-        
-        // Update root word display
-        function updateRootWord() {
-            const letters = selectedLetters.map(index => arabicLetters[index]);
-            const rootWord = letters.join('');
-            document.getElementById('rootWord').textContent = rootWord;
-        }
-        
-        // Open dictionary modal
-        function openDictionary() {
-            const rootWord = document.getElementById('rootWord').textContent.replace(/ /g,'');
-            const dictionaryModal = document.getElementById('dictionaryModal');
-            const dictionaryModalHeader = document.getElementById('dictionaryModalHeader');
-            const dictionaryModalBody = dictionaryModal.querySelector('.modal-body');
-        
-            // Check if all letters are selected before showing dictionary
-            if (rootWord.includes('--')) {
-                // You can add a visual cue here if you want, e.g., a toast notification
-                console.log("Please select all three root letters first.");
-                return;
-            }
-        
-            // Set the modal header to the current root word
-            dictionaryModalHeader.innerHTML = `
-                ${rootWord.split('').join(' - ')}
-                <button class="close-modal">×</button>
-            `;
-            // Apply styles to the dynamically created header text
-            dictionaryModalHeader.style.fontFamily = "'Droid Arabic Naskh', 'Noto Sans Arabic', serif";
-            dictionaryModalHeader.style.fontSize = "1.8rem";
-            dictionaryModalHeader.style.fontWeight = "bold";
-            dictionaryModalHeader.style.color = "white";
-            dictionaryModalHeader.style.background = "black";
-            dictionaryModalHeader.style.padding = "20px";
-        
-            // Check if we have specific content for this root word in dictionaryContent
-            if (dictionaryContent[rootWord]) {
-                dictionaryModalBody.innerHTML = dictionaryContent[rootWord];
+        
+        function changeLetter(position, amount) {
+            if (isAnimating) return; // Prevent changing letters during animation
+
+            let currentIndex = selectedLetters[position - 1];
+            if (currentIndex === -1) { // If currently blank, start from a valid letter
+                currentIndex = (amount > 0) ? 0 : arabicLetters.length - 1;
             } else {
-                // Fallback to the generic placeholder page for other words
-                dictionaryModalBody.innerHTML = `
-                    <p style="text-align: left; margin-bottom: 20px;">
-                        Detailed content for this root word is not yet available.
-                    </p>
-                    <p style="text-align: left;">Please check back later or contribute to expand the dictionary!</p>
-                `;
+                currentIndex = (currentIndex + amount + arabicLetters.length) % arabicLetters.length;
             }
-        
-            // Show the modal
-            dictionaryModal.style.display = 'flex';
-        
-            // Re-attach close listener for the newly created close button in the header
-            dictionaryModal.querySelector('.close-modal').addEventListener('click', closeModal);
-        }
-        
-        // Open video modal
-        function openVideo() {
-            const videoModal = document.getElementById('videoModal');
-            const videoContainer = videoModal.querySelector('.video-container');
-            // Embed the YouTube video iframe
-            videoContainer.innerHTML = `
-                <iframe src="https://www.youtube.com/embed/Io2f2PVz0UE" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-            `;
-            document.getElementById('videoModal').style.display = 'flex';
-        }
-
-        // Open info modal
-        function openInfo() {
-            document.getElementById('infoModal').style.display = 'flex';
-        }
-
-        // Open 4 Huroof modal
-        function openFourHuroof() {
-            document.getElementById('fourHuroofModal').style.display = 'flex';
-        }
-
-        // Open notes modal
-        function openNotes() {
-            document.getElementById('notesModal').style.display = 'flex';
-        }
-        
-        // Close modals
-        function closeModal() {
-            document.getElementById('dictionaryModal').style.display = 'none';
-            document.getElementById('videoModal').style.display = 'none';
-            // Stop YouTube video when modal closes
-            const videoIframe = document.querySelector('#videoModal .video-container iframe');
-            if (videoIframe) {
-                videoIframe.src = videoIframe.src; // Reloads the iframe, effectively stopping the video
+            selectedLetters[position - 1] = currentIndex;
+            updateLetterSelector(position, arabicLetters[currentIndex]);
+            playClickSound();
+        }
+        
+        function updateRootWord() {
+            let rootWord = '';
+            let filledCount = 0;
+            for (let i = 0; i < 3; i++) {
+                if (selectedLetters[i] !== -1) {
+                    rootWord += arabicLetters[selectedLetters[i]];
+                    filledCount++;
+                }
             }
-            document.getElementById('infoModal').style.display = 'none';
-            document.getElementById('fourHuroofModal').style.display = 'none';
-            document.getElementById('notesModal').style.display = 'none';
-        }
-        
-        // Event Listeners
-        document.getElementById('dictionaryBtn').addEventListener('click', openDictionary);
-        document.getElementById('videoBtn').addEventListener('click', openVideo);
-        document.getElementById('infoBtn').addEventListener('click', openInfo);
-        document.getElementById('fourHuroofLink').addEventListener('click', (e) => { e.preventDefault(); openFourHuroof(); });
-        document.getElementById('notesLink').addEventListener('click', (e) => { e.preventDefault(); openNotes(); });
+            document.getElementById('rootWord').textContent = rootWord;
 
-        document.querySelectorAll('.close-modal').forEach(btn => {
-            btn.addEventListener('click', closeModal);
-        });
-        
-        // Close modal when clicking outside
-        window.addEventListener('click', (e) => {
-            if (e.target.classList.contains('modal')) {
-                closeModal();
+            const rootWordEl = document.getElementById('rootWord');
+            rootWordEl.classList.remove('single-letter', 'double-letter');
+            if (filledCount === 1) {
+                rootWordEl.classList.add('single-letter');
+            } else if (filledCount === 2) {
+                rootWordEl.classList.add('double-letter');
             }
-        });
-        
-        // Initialize on load
-        window.onload = initLetterSelectors;
-    </script>
+        }
+
+        function autoScrollToFael() {
+            isAnimating = true;
+            const faelIndexes = [arabicLetters.indexOf('ف'), arabicLetters.indexOf('ع'), arabicLetters.indexOf('ل')];
+
+            function animateWheel(position, targetIndex) {
+                return new Promise(resolve => {
+                    let currentAnimationIndex = 0;
+                    const animationLength = arabicLetters.length * 2 + targetIndex;
+                    
+                    const interval = setInterval(() => {
+                        if (currentAnimationIndex >= animationLength) {
+                            clearInterval(interval);
+                            selectedLetters[position - 1] = targetIndex;
+                            updateLetterSelector(position, arabicLetters[targetIndex]);
+                            resolve();
+                            return;
+                        }
+
+                        const displayIndex = currentAnimationIndex % arabicLetters.length;
+                        updateLetterSelector(position, arabicLetters[displayIndex]);
+                        playClickSound();
+                        currentAnimationIndex++;
+                    }, 70);
+                });
+            }
+
+            async function startAnimation() {
+                // Temporarily hide actual letters in wheels and show blank during initial animation phase
+                for (let i = 1; i <= 3; i++) {
+                    const wheel = document.getElementById(`letter${i}`);
+                    wheel.querySelectorAll('.letter-option').forEach(el => el.textContent = '');
+                    selectedLetters[i-1] = -1; // Ensure internal state is blank
+                }
+                document.getElementById('rootWord').textContent = ''; // Clear root word display
+
+                // Animate from right to left (position 1 is rightmost, position 3 is leftmost)
+                await animateWheel(1, faelIndexes[0]); // Animate 'ف'
+                await new Promise(r => setTimeout(r, 200)); // Small delay between wheels
+                await animateWheel(2, faelIndexes[1]); // Animate 'ع'
+                await new Promise(r => setTimeout(r, 200));
+                await animateWheel(3, faelIndexes[2]); // Animate 'ل'
+                
+                isAnimating = false;
+                updateRootWord();
+            }
+
+            startAnimation();
+        }
+
+        function openDictionary() {
+            const rootWord = document.getElementById('rootWord').textContent;
+            const dictionaryModal = document.getElementById('dictionaryModal');
+            const dictionaryModalHeader = document.getElementById('dictionaryModalHeader');
+            const dictionaryModalBody = dictionaryModal.querySelector('.modal-body');
+        
+            if (rootWord.length !== 3) {
+                console.log("Please select all three root letters first.");
+                return;
+            }
+        
+            dictionaryModalHeader.innerHTML = `
+                ${rootWord.split('').join(' - ')}
+                <button class="close-modal">×</button>
+            `;
+            dictionaryModalHeader.style.fontFamily = "'Droid Arabic Naskh', 'Noto Sans Arabic', serif";
+            dictionaryModalHeader.style.fontSize = "1.8rem";
+            dictionaryModalHeader.style.fontWeight = "bold";
+            dictionaryModalHeader.style.color = "white";
+            dictionaryModalHeader.style.background = "black";
+            dictionaryModalHeader.style.padding = "20px";
+        
+            if (dictionaryContent[rootWord]) {
+                dictionaryModalBody.innerHTML = dictionaryContent[rootWord];
+            } else {
+                dictionaryModalBody.innerHTML = `
+                    <p style="text-align: left; margin-bottom: 20px;">
+                        Detailed content for this root word is not yet available.
+                    </p>
+                    <p style="text-align: left;">Please check back later or contribute to expand the dictionary!</p>
+                `;
+            }
+        
+            dictionaryModal.style.display = 'flex';
+            dictionaryModal.querySelector('.close-modal').addEventListener('click', closeModal);
+        }
+        
+        function openVideo() {
+            const videoModal = document.getElementById('videoModal');
+            const videoContainer = videoModal.querySelector('.video-container');
+            videoContainer.innerHTML = `<iframe src="https://www.youtube.com/embed/Io2f2PVz0UE" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+            document.getElementById('videoModal').style.display = 'flex';
+        }
+
+        function openInfo() {
+            document.getElementById('infoModal').style.display = 'flex';
+        }
+
+        function openFourHuroof() {
+            document.getElementById('fourHuroofModal').style.display = 'flex';
+        }
+
+        function openNotes() {
+            document.getElementById('notesModal').style.display = 'flex';
+        }
+        
+        function closeModal() {
+            document.getElementById('dictionaryModal').style.display = 'none';
+            document.getElementById('videoModal').style.display = 'none';
+            const videoIframe = document.querySelector('#videoModal .video-container iframe');
+            if (videoIframe) {
+                videoIframe.src = videoIframe.src;
+            }
+            document.getElementById('infoModal').style.display = 'none';
+            document.getElementById('fourHuroofModal').style.display = 'none';
+            document.getElementById('notesModal').style.display = 'none';
+        }
+        
+        document.getElementById('dictionaryBtn').addEventListener('click', openDictionary);
+        document.getElementById('videoBtn').addEventListener('click', openVideo);
+        document.getElementById('infoBtn').addEventListener('click', openInfo);
+        document.getElementById('fourHuroofLink').addEventListener('click', (e) => { e.preventDefault(); openFourHuroof(); });
+        document.getElementById('notesLink').addEventListener('click', (e) => { e.preventDefault(); openNotes(); });
+
+        document.querySelectorAll('.close-modal').forEach(btn => {
+            btn.addEventListener('click', closeModal);
+        });
+        
+        window.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal')) {
+                closeModal();
+            }
+        });
+        
+        window.onload = () => {
+            initLetterSelectors();
+        };
+    </script>
 </body>
 </html>
