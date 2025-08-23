@@ -17,7 +17,7 @@
         }
         
         body {
-            background: #F5F5F5; /* New White background */
+            background: #FFFFFF; /* Changed to completely white background */
             display: flex;
             justify-content: center;
             align-items: center;
@@ -45,20 +45,20 @@
         }
         
         .logo-container {
-            width: 60px;
-            height: 60px;
+            width: 70px; /* Increased size */
+            height: 70px; /* Increased size */
             margin: 0 auto 15px;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: rgba(255, 255, 255, 0.1); /* Shaded circle background */
-            border-radius: 50%; /* Shaded circle border-radius */
-            backdrop-filter: blur(5px); /* Shaded circle backdrop-filter */
+            background: transparent; /* Removed circle effect */
+            border-radius: 0; /* Removed circle effect */
+            backdrop-filter: none; /* Removed circle effect */
         }
         
         .logo-container img {
-            width: 40px;
-            height: 40px;
+            width: 50px; /* Increased size */
+            height: 50px; /* Increased size */
             object-fit: contain;
         }
         
@@ -432,7 +432,7 @@
 
         /* Info Modal Specific Styles */
         .info-modal-image {
-            max-width: 80%; /* Reduced max-width */
+            max-width: 60%; /* Reduced max-width */
             height: auto;
             border-radius: 10px;
             margin: 0 auto 20px; /* Centered image */
@@ -787,7 +787,7 @@
                                 <td style="padding: 10px; border: 1px solid #ddd;">Active participle meaning “one who hears” or “listener”; also one of the Names of Allah (The All-Hearing).</td>
                             </tr>
                             <tr>
-                                <td style="padding: 10px; border: 1px solid #ddd;">فَعَّالٌ</td>
+                                <td class="arabic-text" style="padding: 10px; border: 1px solid #ddd; font-family: 'Droid Arabic Naskh', serif;">فَعَّالٌ</td>
                                 <td class="arabic-text" style="padding: 10px; border: 1px solid #ddd; font-family: 'Droid Arabic Naskh', serif;">سَمَّاعٌ</td>
                                 <td style="padding: 10px; border: 1px solid #ddd;">Intensive form meaning “one who listens attentively” or “very attentive listener”.</td>
                             </tr>
@@ -854,7 +854,7 @@
                 setupTyping(i);
             }
             updateRootWord(); // Set initial root word display to blank
-            autoScrollToFael(); // Start auto-scroll animation
+            // Removed autoScrollToFael() call here
         }
 
         function createLetterWheel(position) {
@@ -1010,6 +1010,8 @@
             }
         }
 
+        // autoScrollToFael function is no longer called on page load.
+        // It's kept here in case you want to trigger it manually later.
         function autoScrollToFael() {
             isAnimating = true;
             const faelIndexes = [arabicLetters.indexOf('ف'), arabicLetters.indexOf('ع'), arabicLetters.indexOf('ل')];
@@ -1037,20 +1039,18 @@
             }
 
             async function startAnimation() {
-                // Temporarily hide actual letters in wheels and show blank during initial animation phase
                 for (let i = 1; i <= 3; i++) {
                     const wheel = document.getElementById(`letter${i}`);
                     wheel.querySelectorAll('.letter-option').forEach(el => el.textContent = '');
-                    selectedLetters[i-1] = -1; // Ensure internal state is blank
+                    selectedLetters[i-1] = -1;
                 }
-                document.getElementById('rootWord').textContent = ''; // Clear root word display
+                document.getElementById('rootWord').textContent = '';
 
-                // Animate from right to left (position 1 is rightmost, position 3 is leftmost)
-                await animateWheel(1, faelIndexes[0]); // Animate 'ف'
-                await new Promise(r => setTimeout(r, 200)); // Small delay between wheels
-                await animateWheel(2, faelIndexes[1]); // Animate 'ع'
+                await animateWheel(1, faelIndexes[0]);
                 await new Promise(r => setTimeout(r, 200));
-                await animateWheel(3, faelIndexes[2]); // Animate 'ل'
+                await animateWheel(2, faelIndexes[1]);
+                await new Promise(r => setTimeout(r, 200));
+                await animateWheel(3, faelIndexes[2]);
                 
                 isAnimating = false;
                 updateRootWord();
